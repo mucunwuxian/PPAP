@@ -1343,7 +1343,7 @@ def knn_mistake_search(X,
     # calc mistake
     mistake = np.zeros(sample_num)
     for sample_i in range(sample_num):
-        mistake[sample_i] = 1 - y_hat_tmp[sample_i, y[sample_i]]
+        mistake[sample_i] = 1 - y_hat_tmp[sample_i, int(y[sample_i])]
     mistake_rank = np.argsort(-mistake)
     mistake_rank = mistake_rank[:base_idx_num]
 

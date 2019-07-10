@@ -39,7 +39,7 @@ from umap                      import UMAP
 from sklearn.cluster           import KMeans
 
 # 
-from . import tabular_util as ppap_tab_ut
+from . import tabular_utility as ppap_tab_utl
 
 
 # 
@@ -393,7 +393,7 @@ def train_and_predict(X_train,
         y_train_up = copy(y_train)
         for class_i in range(len(data_num_per_class)):
             # 
-            copy_num = data_num_per_class[0, 1] - data_num_per_class[class_i, 1]
+            copy_num = int(data_num_per_class[0, 1] - data_num_per_class[class_i, 1])
             while (copy_num > 0):
                 X_train_tmp = X_train_up[(y_train_up == data_num_per_class[class_i, 0]), :]
                 X_train_tmp = np.random.permutation(X_train_tmp)
@@ -512,8 +512,8 @@ def train_predict_and_measure(X_train,
         importance_tmp = model_tmp.feature_importances_.astype('float')
     # 
     plt.subplot(1, 1, 1)
-    ppap_tab_ut.draw_importance(importance  = importance_tmp, 
-                                column_name = column_name)
+    ppap_tab_utl.draw_importance(importance  = importance_tmp, 
+                                 column_name = column_name)
 
     # plot
     fig = plt.figure(figsize=(12,8),dpi=100)
@@ -747,9 +747,9 @@ def cv_random(X,
                 # 
                 fig = plt.figure(figsize=(12,4),dpi=100)
                 plt.subplot(1, 1, 1)
-                ppap_tab_ut.draw_importance(importance  = importance_tmp, 
-                                            column_name = column_name, 
-                                            watch_rank  = draw_importance_rank)
+                ppap_tab_utl.draw_importance(importance  = importance_tmp, 
+                                             column_name = column_name, 
+                                             watch_rank  = draw_importance_rank)
             ####################################################
 
         # 

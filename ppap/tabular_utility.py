@@ -1329,10 +1329,31 @@ def knn_mistake_search(X,
                        X_normalize       = True, 
                        X_outlier_care    = False):
     
-    # 
-    mistake      = np.abs(y - y_hat)
+    # get info
+    class_num  = int(np.max(y) + 1) # y = 0, 1, 2, 3, ...
+    sample_num = len(y)
+
+    # adjust y_hat
+    y_hat_tmp = y_hat.copy()
+    if (y_hat_tmp.ndim == 1):
+        y_hat_tmp = y_hat_tmp[:, np.newaxis]
+    if (np.shape(y_hat_tmp)[1] == 1):
+        y_hat_tmp = np.concatenate([y_hat_tmp, (1 - y_hat_tmp)], axis=1)
+
+    # calc mistake
+    mistake = np.zeros(sample_num)
+    for sample_i in range(sample_num):
+        mistake[sample_i] = 1 - y_hat_tmp[sample_i, y[sample_i]]
     mistake_rank = np.argsort(-mistake)
     mistake_rank = mistake_rank[:base_idx_num]
+
+    # summary y_hat
+    y_hat_summary = np.empty(sample_num, dtype='object')
+    for sample_i in range(sample_num):
+        y_hat_summary_tmp = ''
+        for class_i in range(class_num):
+            y_hat_summary_tmp = ('%s%d:%.3f, ' % (y_hat_summary_tmp, class_i, y_hat_tmp[sample_i, class_i]))
+        y_hat_summary[sample_i] = y_hat_summary_tmp[:-1]
 
     #
     X_           = copy(X)
@@ -1389,14 +1410,14 @@ def knn_mistake_search(X,
         distance[base_i, 1:]     = distance_tmp
         nearest_rank[base_i, 1:] = nearest_rank_tmp
         # 
-        df_tmp = pd.DataFrame(np.concatenate([nearest_rank[[base_i], :], 
-                                              distance[[base_i], :],
-                                    y[np.newaxis, nearest_rank[base_i, :]], 
-                                    y_hat[np.newaxis, nearest_rank[base_i, :]], 
-                                    mistake[np.newaxis, nearest_rank[base_i, :]], 
-                                    X.T[:, nearest_rank[base_i, :]]], axis=0)[:, :(k + 1)], 
-                    columns=['base'] + [('neighbor%d' % (i+1)) for i in range(k)], 
-                    index=['data index', 'distance', 'correct label', 'prediction', 'mistake'] + list(column_name))
+        df_tmp = pd.DataFrame(data=np.concatenate([nearest_rank[[base_i], :], 
+                                                   distance[[base_i], :],
+                                                   y[np.newaxis, nearest_rank[base_i, :]], 
+                                                   y_hat_summary[np.newaxis, :], 
+                                                   mistake[np.newaxis, nearest_rank[base_i, :]], 
+                                                   X.T[:, nearest_rank[base_i, :]]], axis=0)[:, :(k + 1)], 
+                              columns=['base'] + [('neighbor%d' % (i+1)) for i in range(k)], 
+                              index=['data index', 'distance', 'correct label', 'prediction', 'mistake'] + list(column_name))
         nearest_info.append(df_tmp)
         # 
         base_i += 1

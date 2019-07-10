@@ -51,26 +51,38 @@ def draw_prediction_scat(y_hat,
 
     # not create figure on this method
 
-    # 
+    # get info
+    class_num = int(np.max(y) + 1) # y = 0, 1, 2, 3, ...
+
+    # calc y_hat score
     if (y_hat.ndim > 1):
-        y_hat_ = np.dot(y_hat, np.arange(np.max(y) + 1)[:, np.newaxis]).reshape(-1)
+        y_hat_ = np.dot(y_hat, np.arange(class_num)[:, np.newaxis]).reshape(-1)
     else:
         y_hat_ = y_hat
 
     # sort for visualization
-    sort_idx       = np.lexsort([y_hat_, y])
-    y_hat_sort     = y_hat_[sort_idx]
-    y_sort         = y[sort_idx]
+    sort_idx   = np.lexsort([y_hat_, y])
+    y_hat_sort = y_hat_[sort_idx]
+    y_sort     = y[sort_idx]
 
     if (alpha is None):
         alpha      = np.max([0.005, np.min([0.1, (100 / len(y))])])
+        # sometime automate
+        # MEMO 80 -> 0.5
+        # MEMO 280 -> 0.3
 
     ############################################################
-    plt.scatter(np.arange(len(y_sort)),     y_sort,     alpha=alpha, label='actual')
-    plt.scatter(np.arange(len(y_hat_sort)), y_hat_sort, alpha=alpha, label='predict')
-    plt.scatter([(sum(y_sort == 0) / 2), (sum(y_sort == 0) + (sum(y_sort == 1) / 2))], 
-                [np.mean(y_hat_sort[(y_sort == 0)]), np.mean(y_hat_sort[(y_sort == 1)])], alpha=0.5, s=100, label='mean of predict')
-    if (np.sum(y == 0) > np.sum(y == 1)):
+    cmap = plt.get_cmap("tab10")
+    plt.scatter(np.arange(len(y_sort)),     y_sort,     alpha=alpha, label='actual', color=cmap(0))
+    plt.scatter(np.arange(len(y_hat_sort)), y_hat_sort, alpha=alpha, label='predict', color=cmap(1))
+    for class_i in range(class_num):
+        x_tmp = np.sum(y_sort < class_i) + (np.sum(y_sort == class_i) / 2) 
+        y_tmp = np.mean(y_hat_sort[(y_sort == class_i)])
+        if (class_i == 0):
+            plt.scatter(x_tmp, y_tmp, alpha=0.3, s=200, color=cmap(2), label='mean of predict')
+        else:
+            plt.scatter(x_tmp, y_tmp, alpha=0.3, s=200, color=cmap(2))
+    if (np.sum(y < (np.max(y) / 2)) > np.sum((np.max(y) / 2) < y)):
         plt.legend(loc='upper left')
     else:
         plt.legend(loc='lower right')
@@ -88,22 +100,29 @@ def draw_prediction_dist(y_hat,
 
     # not create figure on this merhod
 
+    # get info
+    class_num = int(np.max(y) + 1) # y = 0, 1, 2, 3, ...
+
+    # calc y_hat score
+    if (y_hat.ndim > 1):
+        y_hat_ = np.dot(y_hat, np.arange(class_num)[:, np.newaxis]).reshape(-1)
+    else:
+        y_hat_ = y_hat
+
     # make histogram
-    bins_value      = np.linspace(0, 1, num=41)
+    bins_value      = np.linspace(0, np.max(y), num=41)
     bins_value[-1] += 1e-20
-    
     bins_mean       = np.zeros(len(bins_value) - 1)
-    y_hat_hist_0    = np.zeros(len(bins_value) - 1)
-    y_hat_hist_1    = np.zeros(len(bins_value) - 1)
+    y_hat_hist      = np.zeros([len(bins_value) - 1, class_num])
     for bins_i in range(len(bins_mean)):
-        bins_mean[bins_i]    = (bins_value[bins_i] + bins_value[bins_i+1]) / 2
-        y_hat_hist_0[bins_i] = np.sum((bins_value[bins_i] <= y_hat[y == 0]) & (y_hat[y == 0] < bins_value[bins_i + 1]))
-        y_hat_hist_1[bins_i] = np.sum((bins_value[bins_i] <= y_hat[y == 1]) & (y_hat[y == 1] < bins_value[bins_i + 1]))
+        bins_mean[bins_i] = (bins_value[bins_i] + bins_value[bins_i + 1]) / 2
+        for class_i in range(class_num):
+            y_hat_hist[bins_i, class_i] = np.sum((bins_value[bins_i] <= y_hat_[y == class_i]) & (y_hat_[y == class_i] < bins_value[bins_i + 1]))
     
     ############################################################
-    plt.bar(bins_mean, (y_hat_hist_0 / np.sum(y_hat_hist_0)), alpha=0.5, label='y == 0', width=((bins_mean[1] - bins_mean[0]) * 0.9))
-    plt.bar(bins_mean, (y_hat_hist_1 / np.sum(y_hat_hist_1)), alpha=0.5, label='y == 1', width=((bins_mean[1] - bins_mean[0]) * 0.9))
-    plt.legend(loc='upper center')
+    for class_i in range(class_num):
+        plt.bar(bins_mean, (y_hat_hist[:, class_i] / np.sum(y_hat_hist[:, class_i])), alpha=0.5, label=('y == %d' % class_i), width=((bins_mean[1] - bins_mean[0]) * 0.9))
+    plt.legend(loc='best')
     plt.ylabel('frequency ratio of %s data' % data_type)
     plt.xlabel('y hat value')
     plt.rcParams["font.size"] = font_size
@@ -123,21 +142,23 @@ def draw_roc(y_hat,
 
     # not create figure on this method
 
-    # 
+    # adjust ...
     if (type(model_name) == str):
         model_name = [model_name]
-    if (type(y_hat) == np.ndarray):
-        y_hat = [y_hat]
-        y     = [y]
-    if (type(y_hat[0]) == np.ndarray):
-        y_hat = [y_hat]
-        y     = [y]
+    y_hat_ = y_hat.copy()
+    if (type(y_hat_) == np.ndarray):
+        y_hat_ = [y_hat_]
+        y      = [y]
+    if (type(y_hat_[0]) == np.ndarray):
+        y_hat_ = [y_hat_]
+        y      = [y]
 
-    # 
-    model_num = np.shape(y_hat)[0]
-    cv_num    = np.shape(y_hat)[1]
+    # get info
+    class_num = int(np.max(y[0][0]) + 1) # y = 0, 1, 2, 3, ...
+    model_num = np.shape(y_hat_)[0]
+    cv_num    = np.shape(y_hat_)[1]
     auc       = np.zeros([model_num, cv_num])
-
+    # 
     draw_cv   = np.random.permutation(np.arange(cv_num))[:int(np.ceil(cv_num * draw_cv_ratio))]
 
     for model_i in range(model_num):
@@ -146,22 +167,27 @@ def draw_roc(y_hat,
         color_tmp    = cm.hsv(model_i/(model_num * 1.1))
 
         for cv_i in range(cv_num):
+            
+            if (class_num > 2):
+                class_idx = np.arange(class_num)
+            else:
+                class_idx = np.array([1])
+            for class_i in class_idx:
+                # calc FPR, TPR and threshold
+                fpr, tpr, threshold = metrics.roc_curve((y[model_i][cv_i] == class_i).astype('float32'), 
+                                                         (y_hat_[model_i][cv_i][:, class_i]).astype('float32'))
 
-            # calc FPR, TPR and threshold
-            fpr, tpr, threshold = metrics.roc_curve(y[model_i][cv_i], y_hat[model_i][cv_i])
+                # calc AUC or ROC curve
+                auc[model_i, cv_i] += metrics.auc(fpr, tpr) / len(class_idx)
 
-            # calc AUC or ROC curve
-            auc[model_i, cv_i] = metrics.auc(fpr, tpr)
-
-            if (cv_i in draw_cv):
-                ################################################
-                if (legend_unset):
-                    plt.plot(fpr, tpr, label=('%s' % model_name[model_i]), color=color_tmp, alpha=(0.8/len(draw_cv)), linewidth=3)
-                    legend_unset = False
-                else:
-                    plt.plot(fpr, tpr, color=color_tmp, alpha=(0.8/len(draw_cv)), linewidth=3)
-                # plt.scatter(fpr, tpr, color=color_tmp, alpha=(0.8/len(draw_cv)))
-                ################################################
+                if (cv_i in draw_cv):
+                    ############################################
+                    if (legend_unset):
+                        plt.plot(fpr, tpr, color=color_tmp, alpha=(0.8/len(draw_cv)/len(class_idx)), linewidth=3, label=('%s' % model_name[model_i]))
+                        legend_unset = False
+                    else:
+                        plt.plot(fpr, tpr, color=color_tmp, alpha=(0.8/len(draw_cv)/len(class_idx)), linewidth=3)
+                    ############################################
 
         ########################################################
         if (draw_legend):
@@ -174,6 +200,7 @@ def draw_roc(y_hat,
         ########################################################
 
     return auc
+
 
 # y_hat 1 dim -> (data index)
 # y_hat 2 dim -> (data index, cross validation index)
@@ -188,7 +215,7 @@ def draw_pr(y_hat,
 
     # not create figure on this method
 
-    # 
+    # adjust ...
     if (type(model_name) == str):
         model_name = [model_name]
     if (type(y_hat) == np.ndarray):
@@ -198,11 +225,12 @@ def draw_pr(y_hat,
         y_hat = [y_hat]
         y     = [y]
 
-    # 
+    # get info
+    class_num = int(np.max(y[0][0]) + 1) # y = 0, 1, 2, 3, ...
     model_num = np.shape(y_hat)[0]
     cv_num    = np.shape(y_hat)[1]
     auc       = np.zeros([model_num, cv_num])
-
+    # 
     draw_cv   = np.random.permutation(np.arange(cv_num))[:int(np.ceil(cv_num * draw_cv_ratio))]
 
     for model_i in range(model_num):
@@ -212,21 +240,26 @@ def draw_pr(y_hat,
 
         for cv_i in range(np.shape(y_hat)[1]):
 
-            # calc Precision, Recall and threshold
-            precision, recall, threshold = metrics.precision_recall_curve(y[model_i][cv_i], y_hat[model_i][cv_i])
+            if (class_num > 2):
+                class_idx = np.arange(class_num)
+            else:
+                class_idx = np.array([1])
+            for class_i in class_idx:
+                # calc Precision, Recall and threshold
+                precision, recall, threshold = metrics.precision_recall_curve((y[model_i][cv_i] == class_i).astype('float32'), 
+                                                                              (y_hat[model_i][cv_i][:, class_i]).astype('float32'))
 
-            # calc AUC or ROC curve
-            auc[model_i, cv_i] = metrics.auc(recall, precision)
+                # calc AUC or ROC curve
+                auc[model_i, cv_i] += metrics.auc(recall, precision) / len(class_idx)
 
-            if (cv_i in draw_cv):
-                ################################################
-                if (legend_unset):
-                    plt.plot(recall, precision, label=('%s' % model_name[model_i]), color=color_tmp, alpha=(0.8/len(draw_cv)), linewidth=3)
-                    legend_unset = False
-                else:
-                    plt.plot(recall, precision, color=color_tmp, alpha=(0.8/len(draw_cv)), linewidth=3)
-                # plt.scatter(recall, precision, color=color_tmp, alpha=(0.8/len(draw_cv)))
-                ################################################
+                if (cv_i in draw_cv):
+                    ############################################
+                    if (legend_unset):
+                        plt.plot(recall, precision, color=color_tmp, alpha=(0.8/len(draw_cv)/len(class_idx)), linewidth=3, label=('%s' % model_name[model_i]))
+                        legend_unset = False
+                    else:
+                        plt.plot(recall, precision, color=color_tmp, alpha=(0.8/len(draw_cv)/len(class_idx)), linewidth=3)
+                    ############################################
 
         ########################################################
         if (draw_legend):
@@ -358,9 +391,9 @@ def train_and_predict(X_train,
         # 
         X_train_up = copy(X_train)
         y_train_up = copy(y_train)
-        for class_i in range(data_num_per_class):
+        for class_i in range(len(data_num_per_class)):
             # 
-            copy_num = data_num_per_class[0] - data_num_per_class[class_i]
+            copy_num = data_num_per_class[0, 1] - data_num_per_class[class_i, 1]
             while (copy_num > 0):
                 X_train_tmp = X_train_up[(y_train_up == data_num_per_class[class_i, 0]), :]
                 X_train_tmp = np.random.permutation(X_train_tmp)
@@ -370,18 +403,24 @@ def train_and_predict(X_train,
                 X_train_up  = np.concatenate([X_train_up, X_train_tmp], axis=0)
                 y_train_up  = np.concatenate([y_train_up, y_train_tmp], axis=0)
                 copy_num   -= len(X_train_tmp)
+        #
+        if ('verbose' in inspect.getargspec(model_tmp.fit)):
+            model_tmp.fit(X_train_up, y_train_up, verbose=False)
+        else:
+            model_tmp.fit(X_train_up, y_train_up)
+        # 
+        y_train_hat = model_tmp.predict_proba(X_train_up)
     else:
         # 
         X_train_up = np.nan
         y_train_up = np.nan
-    
-    #
-    if ('verbose' in inspect.getargspec(model_tmp.fit)):
-        model_tmp.fit(X_train, y_train, verbose=False)
-    else:
-        model_tmp.fit(X_train, y_train)
-    # 
-    y_train_hat = model_tmp.predict_proba(X_train)
+        #
+        if ('verbose' in inspect.getargspec(model_tmp.fit)):
+            model_tmp.fit(X_train, y_train, verbose=False)
+        else:
+            model_tmp.fit(X_train, y_train)
+        # 
+        y_train_hat = model_tmp.predict_proba(X_train)
     # 
     y_test_hat  = model_tmp.predict_proba(X_test)
 
@@ -544,13 +583,15 @@ def cv_random(X,
               cv_num               = 10,
               draw_auc_flg         = True,  
               draw_cv_ratio        = 0.1, 
-              draw_importance_rank = 30):
+              draw_importance_rank = 30, 
+              alpha                = None):
 
     # random seed adjust
     np.random.seed(0)
 
     # 
-    X_dim = np.shape(X)[1]
+    X_dim     = np.shape(X)[1]
+    class_num = int(np.max(y) + 1) # y = 0, 1, 2, 3, ...
 
     # 
     draw_cv = np.random.permutation(np.arange(cv_num))[:int(np.ceil(cv_num * draw_cv_ratio))]
@@ -649,16 +690,22 @@ def cv_random(X,
                 importance_tmp = model_tmp.feature_importances_.astype('float')
             importance_stock[:, cv_i, model_i] = importance_tmp
 
-            # calc AUC
-            if (sample_balance):
-                fpr, tpr, _ = metrics.roc_curve(y_train_up, y_train_hat)
-            else:
-                fpr, tpr, _ = metrics.roc_curve(y_train, y_train_hat)
-            auc_tmp     = metrics.auc(fpr, tpr)
-            auc_train  += (auc_tmp / cv_num)
-            fpr, tpr, _ = metrics.roc_curve(y_test, y_test_hat)
-            auc_tmp     = metrics.auc(fpr, tpr)
-            auc_test   += (auc_tmp / cv_num)
+            for class_i in range(class_num):
+
+                # calc AUC
+                if (sample_balance):
+                    fpr, tpr, _ = metrics.roc_curve((y_train_up == class_i).astype('float32'), 
+                                                    (y_train_hat[:, class_i]).astype('float32'))
+                else:
+                    fpr, tpr, _ = metrics.roc_curve((y_train == class_i).astype('float32'), 
+                                                    (y_train_hat[:, class_i]).astype('float32'))
+                # 
+                auc_tmp     = metrics.auc(fpr, tpr)
+                auc_train  += (auc_tmp / cv_num / class_num)
+                fpr, tpr, _ = metrics.roc_curve((y_test == class_i).astype('float32'), 
+                                                (y_test_hat[:, class_i]).astype('float32'))
+                auc_tmp     = metrics.auc(fpr, tpr)
+                auc_test   += (auc_tmp / cv_num / class_num)
 
             ####################################################
             if (cv_i in draw_cv):
@@ -669,16 +716,19 @@ def cv_random(X,
                 if (sample_balance):
                     draw_prediction_scat(y_hat     = y_train_hat, 
                                          y         = y_train_up, 
-                                         data_type = 'train')
+                                         data_type = 'train', 
+                                         alpha     = alpha)
                 else:
                     draw_prediction_scat(y_hat     = y_train_hat, 
                                          y         = y_train, 
-                                         data_type = 'train')
+                                         data_type = 'train', 
+                                         alpha     = alpha)
                 # 
                 plt.subplot(2, 2, 2)
                 draw_prediction_scat(y_hat     = y_test_hat, 
                                      y         = y_test, 
-                                     data_type = 'test')
+                                     data_type = 'test', 
+                                     alpha     = alpha)
                 # 
                 plt.subplot(2, 2, 3)
                 if (sample_balance):
@@ -696,7 +746,6 @@ def cv_random(X,
                                      data_type = 'test')
                 # 
                 fig = plt.figure(figsize=(12,4),dpi=100)
-                # 
                 plt.subplot(1, 1, 1)
                 ppap_tab_ut.draw_importance(importance  = importance_tmp, 
                                             column_name = column_name, 
@@ -792,7 +841,8 @@ def rfe_and_cv(X,
                cv_train_ratio       = 0.5, 
                cv_num               = 10, 
                draw_cv_ratio        = 0.1, 
-               draw_importance_rank = 30):
+               draw_importance_rank = 30, 
+               alpha                = None):
 
     # random seed adjust
     np.random.seed(0)
@@ -870,7 +920,8 @@ def rfe_and_cv(X,
                                                cv_num               = cv_num,  
                                                draw_auc_flg         = False, 
                                                draw_cv_ratio        = draw_cv_ratio, 
-                                               draw_importance_rank = draw_importance_rank)
+                                               draw_importance_rank = draw_importance_rank, 
+                                               alpha                = alpha)
             # 
             for cv_i in range(cv_num):
                 # 

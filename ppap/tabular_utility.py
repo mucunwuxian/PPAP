@@ -935,7 +935,8 @@ def correlation_visualize(X,
     corr_with_y = corr_with_y.ravel()
 
     ############################################################
-    sort_idx = np.argsort(-np.abs(corr_with_y))[:watch_corr_rank]
+    sort_idx      = np.argsort(-np.abs(corr_with_y))
+    sort_idx_trim = sort_idx[:watch_corr_rank]
     
     fig = plt.figure(figsize=(12,8),dpi=100)
 
@@ -955,12 +956,12 @@ def correlation_visualize(X,
     plt.grid(True)
 
     ax = plt.subplot(2, 1, 2)
-    plt.bar(np.arange(watch_corr_rank), corr_with_y[sort_idx])
+    plt.bar(np.arange(watch_corr_rank), corr_with_y[sort_idx_trim])
     if (abs_flg):
         plt.ylim(-0.05, 1.05)
     plt.xlim(-0.9, (watch_corr_rank - 0.1))
     plt.xticks(np.arange(watch_corr_rank))
-    ax.set_xticklabels(column_name[sort_idx], rotation=90)
+    ax.set_xticklabels(column_name[sort_idx_trim], rotation=90)
     plt.title('correlation with X and y (TOP%d)' % watch_corr_rank)
     plt.ylabel('absolute correlation value')
     plt.rcParams["font.size"] = font_size
@@ -1182,7 +1183,6 @@ def kmeans_classification(X,
         plt.xlabel('column index')
         plt.rcParams["font.size"] = font_size
         plt.grid(True)
-        # 
         ####################################################
 
         ####################################################
@@ -1216,7 +1216,7 @@ def kmeans_classification(X,
         plt.xticks(np.arange(len(column_name)))
         ax.set_xticklabels(column_name, rotation=90)
         plt.rcParams["font.size"] = font_size
-        plt.title('distribtion of cluster (prior class data amount)')
+        plt.title('distribtion of cluster (prior class data ratio)')
         if (X_normalize):
             plt.ylabel('normalized value (mean, ±1σ)')
         else:
@@ -1224,8 +1224,6 @@ def kmeans_classification(X,
         plt.xlabel('column index')
         plt.rcParams["font.size"] = font_size
         plt.grid(True)
-        # 
-        plt.show()
         ####################################################
 
     return (kmeans_result, X_, idx_k_sort)
@@ -1341,7 +1339,7 @@ def knn_mistake_search(X,
         y_hat_tmp = np.concatenate([y_hat_tmp, (1 - y_hat_tmp)], axis=1)
 
     # calc mistake
-    mistake = np.zeros(sample_num)
+    mistake = np.empty(sample_num)
     for sample_i in range(sample_num):
         mistake[sample_i] = 1 - y_hat_tmp[sample_i, int(y[sample_i])]
     mistake_rank = np.argsort(-mistake)
@@ -1413,7 +1411,7 @@ def knn_mistake_search(X,
         df_tmp = pd.DataFrame(data=np.concatenate([nearest_rank[[base_i], :], 
                                                    distance[[base_i], :],
                                                    y[np.newaxis, nearest_rank[base_i, :]], 
-                                                   y_hat_summary[np.newaxis, :], 
+                                                   y_hat_summary[np.newaxis, nearest_rank[base_i, :]], 
                                                    mistake[np.newaxis, nearest_rank[base_i, :]], 
                                                    X.T[:, nearest_rank[base_i, :]]], axis=0)[:, :(k + 1)], 
                               columns=['base'] + [('neighbor%d' % (i+1)) for i in range(k)], 

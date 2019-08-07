@@ -4,7 +4,7 @@
 PPAP : Pre-Processing And Prediction
 """
 
-# Author: Taketo Kimura <taketo_kimura@micin.jp>
+# Author: Taketo Kimura <mucun.wuxian@gmail.com>
 # License: BSD 3 clause
 
 
@@ -35,7 +35,8 @@ MCLASS_DEFINE = 50
 def check_nan_ratio_vert(X, 
                          column_name = None, 
                          watch_rank  = 20, 
-                         font_size   = 12):
+                         font_size   = 12, 
+                         draw_mode   = True):
     
     # escape
     X_           = copy(X)
@@ -70,69 +71,71 @@ def check_nan_ratio_vert(X,
     nan_ratio = np.sum(((X_ == X_) == False), axis=0) / X_num
     # nan_ratio = nan_ratio + np.sum((X_ == 'nan'), axis=0) / X_num
 
-    # print including nan column
-    print('\ninclude nan column is ...')
-    print('\n------------------------------------------------------------')
-    for column_i in range(X_dim):
-        if (nan_ratio[column_i] > 0):
-            print('  - %s -> %.5f' % (column_name_[column_i], nan_ratio[column_i]))
+    if (draw_mode):
+        # print including nan column
+        print('\ninclude nan column is ...')
+        print('\n------------------------------------------------------------')
+        for column_i in range(X_dim):
+            if (nan_ratio[column_i] > 0):
+                print('  - %s -> %.5f' % (column_name_[column_i], nan_ratio[column_i]))
 
-    ############################################################
-    if (np.sum(nan_ratio) > 0):
-        # make figure
-        plt.figure(figsize=(12,8),dpi=100)
-        # 
-        sort_idx = np.argsort(-nan_ratio)
-        plt.subplot(2, 1, 1)
-        ax = plt.gca()
-        plt.bar(np.arange(len(nan_ratio)), nan_ratio[sort_idx])
-        plt.ylim(-0.05, 1.05)
-        plt.xlim(-0.9, (len(nan_ratio) -0.1))
-        plt.title('nan ratio of X of all columns')
-        plt.ylabel('nan exist ratio')
-        plt.xlabel('column index')
-        plt.rcParams["font.size"] = font_size
-        plt.grid(True)
-        # 
-        sort_idx = sort_idx[:watch_rank]
-        plt.subplot(2, 2, 3)
-        ax = plt.gca()
-        plt.bar(np.arange(watch_rank), nan_ratio[sort_idx])
-        plt.ylim(-0.05, 1.05)
-        plt.xlim(-0.9, (watch_rank -0.1))
-        plt.xticks(np.arange(watch_rank))
-        ax.set_xticklabels(column_name_[sort_idx], rotation=90, fontsize='small')
-        plt.title('nan ratio of X (TOP%d)' % watch_rank)
-        plt.ylabel('nan exist ratio')
-        plt.rcParams["font.size"] = font_size
-        plt.grid(True)
-        # 
-        sort_idx = np.argsort(nan_ratio)[:watch_rank]
-        for i in range(len(sort_idx) // 2):
-            sort_idx[i], sort_idx[-1-i] = sort_idx[-1-i], sort_idx[i]
-        plt.subplot(2, 2, 4)
-        ax = plt.gca()
-        plt.bar(np.arange(watch_rank), nan_ratio[sort_idx])
-        plt.ylim(-0.05, 1.05)
-        plt.xlim(-0.9, (watch_rank -0.1))
-        plt.xticks(np.arange(watch_rank))
-        ax.set_xticklabels(column_name_[sort_idx], rotation=90, fontsize='small')
-        plt.title('nan ratio of X (BOTTOM%d)' % watch_rank)
-        plt.ylabel('nan exist ratio')
-        plt.rcParams["font.size"] = font_size
-        plt.grid(True)
-        # 
-        plt.show()
-    else:
-        print('nan is not exist. check OK!')
-    ############################################################
+        ########################################################
+        if (np.sum(nan_ratio) > 0):
+            # make figure
+            plt.figure(figsize=(12,8),dpi=100)
+            # 
+            sort_idx = np.argsort(-nan_ratio)
+            plt.subplot(2, 1, 1)
+            ax = plt.gca()
+            plt.bar(np.arange(len(nan_ratio)), nan_ratio[sort_idx])
+            plt.ylim(-0.05, 1.05)
+            plt.xlim(-0.9, (len(nan_ratio) -0.1))
+            plt.title('nan ratio of X of all columns')
+            plt.ylabel('nan exist ratio')
+            plt.xlabel('column index')
+            plt.rcParams["font.size"] = font_size
+            plt.grid(True)
+            # 
+            sort_idx = sort_idx[:watch_rank]
+            plt.subplot(2, 2, 3)
+            ax = plt.gca()
+            plt.bar(np.arange(watch_rank), nan_ratio[sort_idx])
+            plt.ylim(-0.05, 1.05)
+            plt.xlim(-0.9, (watch_rank -0.1))
+            plt.xticks(np.arange(watch_rank))
+            ax.set_xticklabels(column_name_[sort_idx], rotation=90, fontsize='small')
+            plt.title('nan ratio of X (TOP%d)' % watch_rank)
+            plt.ylabel('nan exist ratio')
+            plt.rcParams["font.size"] = font_size
+            plt.grid(True)
+            # 
+            sort_idx = np.argsort(nan_ratio)[:watch_rank]
+            for i in range(len(sort_idx) // 2):
+                sort_idx[i], sort_idx[-1-i] = sort_idx[-1-i], sort_idx[i]
+            plt.subplot(2, 2, 4)
+            ax = plt.gca()
+            plt.bar(np.arange(watch_rank), nan_ratio[sort_idx])
+            plt.ylim(-0.05, 1.05)
+            plt.xlim(-0.9, (watch_rank -0.1))
+            plt.xticks(np.arange(watch_rank))
+            ax.set_xticklabels(column_name_[sort_idx], rotation=90, fontsize='small')
+            plt.title('nan ratio of X (BOTTOM%d)' % watch_rank)
+            plt.ylabel('nan exist ratio')
+            plt.rcParams["font.size"] = font_size
+            plt.grid(True)
+            # 
+            plt.show()
+        else:
+            print('nan is not exist. check OK!')
+        ########################################################
 
     return nan_ratio
 
 # 
 def check_nan_ratio_horz(X, 
                          watch_rank  = 20, 
-                         font_size   = 12):
+                         font_size   = 12, 
+                         draw_mode   = True):
     
     # escape
     X_ = copy(X)
@@ -153,62 +156,63 @@ def check_nan_ratio_horz(X,
     nan_ratio = np.sum(((X_ == X_) == False), axis=1) / X_dim
     # nan_ratio = nan_ratio + np.sum((X_ == 'nan'), axis=1) / X_dim
 
-    ############################################################
-    if (np.sum(nan_ratio) > 0):
-        # make figure
-        plt.figure(figsize=(12,8),dpi=100)
-        # 
-        max_view_num = 20000
-        if (len(nan_ratio) > max_view_num):
-            nan_ratio_   = np.random.permutation(nan_ratio)[:max_view_num]
-            sampling_flg = True
+    if (draw_mode):
+        ########################################################
+        if (np.sum(nan_ratio) > 0):
+            # make figure
+            plt.figure(figsize=(12,8),dpi=100)
+            # 
+            max_view_num = 20000
+            if (len(nan_ratio) > max_view_num):
+                nan_ratio_   = np.random.permutation(nan_ratio)[:max_view_num]
+                sampling_flg = True
+            else:
+                nan_ratio_   = nan_ratio
+                sampling_flg = False
+            #
+            sort_idx = np.argsort(-nan_ratio_)
+            plt.subplot(2, 1, 1)
+            ax = plt.gca()
+            plt.bar(np.arange(len(nan_ratio_)), nan_ratio_[sort_idx])
+            plt.ylim(-0.05, 1.05)
+            plt.xlim(-0.9, (len(nan_ratio_) -0.1))
+            if (sampling_flg):
+                plt.title('nan ratio of X of all columns (view sampling %d rec)' % max_view_num)
+            else:
+                plt.title('nan ratio of X of all columns')
+            plt.ylabel('nan exist ratio')
+            plt.xlabel('column index')
+            plt.rcParams["font.size"] = font_size
+            plt.grid(True)
+            # 
+            sort_idx = sort_idx[:watch_rank]
+            plt.subplot(2, 2, 3)
+            ax = plt.gca()
+            plt.bar(np.arange(watch_rank), nan_ratio_[sort_idx])
+            plt.ylim(-0.05, 1.05)
+            plt.xlim(-0.9, (watch_rank -0.1))
+            plt.title('nan ratio of X (TOP%d)' % watch_rank)
+            plt.ylabel('nan exist ratio')
+            plt.rcParams["font.size"] = font_size
+            plt.grid(True)
+            # 
+            sort_idx = np.argsort(nan_ratio_)[:watch_rank]
+            for i in range(len(sort_idx) // 2):
+                sort_idx[i], sort_idx[-1-i] = sort_idx[-1-i], sort_idx[i]
+            plt.subplot(2, 2, 4)
+            ax = plt.gca()
+            plt.bar(np.arange(watch_rank), nan_ratio_[sort_idx])
+            plt.ylim(-0.05, 1.05)
+            plt.xlim(-0.9, (watch_rank -0.1))
+            plt.title('nan ratio of X (BOTTOM%d)' % watch_rank)
+            plt.ylabel('nan exist ratio')
+            plt.rcParams["font.size"] = font_size
+            plt.grid(True)
+            # 
+            plt.show()
         else:
-            nan_ratio_   = nan_ratio
-            sampling_flg = False
-        #
-        sort_idx = np.argsort(-nan_ratio_)
-        plt.subplot(2, 1, 1)
-        ax = plt.gca()
-        plt.bar(np.arange(len(nan_ratio_)), nan_ratio_[sort_idx])
-        plt.ylim(-0.05, 1.05)
-        plt.xlim(-0.9, (len(nan_ratio_) -0.1))
-        if (sampling_flg):
-            plt.title('nan ratio of X of all columns (view sampling %d rec)' % max_view_num)
-        else:
-            plt.title('nan ratio of X of all columns')
-        plt.ylabel('nan exist ratio')
-        plt.xlabel('column index')
-        plt.rcParams["font.size"] = font_size
-        plt.grid(True)
-        # 
-        sort_idx = sort_idx[:watch_rank]
-        plt.subplot(2, 2, 3)
-        ax = plt.gca()
-        plt.bar(np.arange(watch_rank), nan_ratio_[sort_idx])
-        plt.ylim(-0.05, 1.05)
-        plt.xlim(-0.9, (watch_rank -0.1))
-        plt.title('nan ratio of X (TOP%d)' % watch_rank)
-        plt.ylabel('nan exist ratio')
-        plt.rcParams["font.size"] = font_size
-        plt.grid(True)
-        # 
-        sort_idx = np.argsort(nan_ratio_)[:watch_rank]
-        for i in range(len(sort_idx) // 2):
-            sort_idx[i], sort_idx[-1-i] = sort_idx[-1-i], sort_idx[i]
-        plt.subplot(2, 2, 4)
-        ax = plt.gca()
-        plt.bar(np.arange(watch_rank), nan_ratio_[sort_idx])
-        plt.ylim(-0.05, 1.05)
-        plt.xlim(-0.9, (watch_rank -0.1))
-        plt.title('nan ratio of X (BOTTOM%d)' % watch_rank)
-        plt.ylabel('nan exist ratio')
-        plt.rcParams["font.size"] = font_size
-        plt.grid(True)
-        # 
-        plt.show()
-    else:
-        print('nan is not exist. check OK!')
-    ############################################################
+            print('nan is not exist. check OK!')
+        ########################################################
 
     return nan_ratio
 
@@ -948,6 +952,8 @@ def correlation_visualize(X,
     plt.bar(np.arange(len(corr_with_y)), corr_with_y, width=width)
     if (abs_flg):
         plt.ylim(-0.05, 1.05)
+    else:
+        plt.ylim(-1.05, 1.05)
     plt.xlim(-0.9, (len(corr_with_y) - 0.1))
     plt.title('correlation with X and y of all column')
     plt.ylabel('absolute correlation value')
@@ -1547,3 +1553,47 @@ def dump_value(csv_filename   = None,
     ###########################################################
 
     return True
+
+
+def compare_dist(vector_list, 
+                 vector_name, 
+                 xlabel     = 'column index', 
+                 ylabel     = 'value', 
+                 font_size  = 12):
+    # check
+    if (len(vector_list) != len(vector_name)):
+        raise Exception('length mismatch with vector_list and vector_name')
+
+    # sum up
+    vector_num      = len(vector_list)
+    vector_list_tmp = []
+    # adjust
+    for vector_i in range(vector_num):
+        if ((type(vector_list[vector_i]) == pd.core.frame.DataFrame) |
+            (type(vector_list[vector_i]) == pd.core.series.Series)):
+            vector_tmp = copy(vector_list[vector_i].values)
+        elif (type(vector_list[vector_i]) == np.ndarray):
+            vector_tmp = copy(vector_list[vector_i])
+        else:
+            raise Exception('vector_list[%d] is unknown type' % vector_i)
+        vector_list_tmp.append(vector_tmp)
+
+    # show
+    fig = plt.figure(figsize=(12,(5*vector_num)),dpi=100)
+    # roop of vector
+    for vector_i in range(vector_num):
+        vector_tmp = vector_list_tmp[vector_i]
+        ax = plt.subplot(vector_num, 1, (vector_i + 1))
+        if (len(vector_tmp) > 1000):
+            width = 1.6
+        else:
+            width = 0.8
+        plt.bar(np.arange(len(vector_tmp)), vector_tmp, width=width)
+        plt.xlim(-0.9, (len(vector_tmp) - 0.1))
+        plt.title('distribution of %s' % vector_name[vector_i])
+        plt.ylabel(ylabel)
+        if (vector_i == (vector_num - 1)):
+            plt.xlabel(xlabel)
+        plt.rcParams["font.size"] = font_size
+        plt.grid(True)
+    plt.show()

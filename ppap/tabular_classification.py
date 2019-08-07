@@ -4,7 +4,7 @@
 PPAP : Pre-Processing And Prediction
 """
 
-# Author: Taketo Kimura <taketo_kimura@micin.jp>
+# Author: Taketo Kimura <mucun.wuxian@gmail.com>
 # License: BSD 3 clause
 
 
@@ -571,6 +571,81 @@ def train_predict_and_measure(X_train,
             y_test_hat, 
             X_train_up, 
             y_train_up)
+
+#
+def predict_and_measure(X_test, 
+                        y_test, 
+                        model, 
+                        column_name    = None,
+                        alpha          = None):
+
+    # 
+    X_dim = np.shape(X_test)[1]
+
+    # adjust    
+    if (column_name is None):
+        column_name = [('column_%d' % i) for i in range(X_dim)]
+    if (type(column_name) == list):
+        column_name = np.array(column_name)
+
+    # 
+    y_test_hat = model.predict_proba(X_test)
+
+    ############################################################
+    fig = plt.figure(figsize=(12,4),dpi=100)
+    # 
+    plt.subplot(1, 2, 1)
+    draw_prediction_scat(y_hat     = y_test_hat, 
+                         y         = y_test, 
+                         data_type = 'test', 
+                         alpha     = alpha)
+    # 
+    plt.subplot(1, 2, 2)
+    draw_prediction_dist(y_hat     = y_test_hat, 
+                         y         = y_test, 
+                         data_type = 'test')
+    # 
+    fig = plt.figure(figsize=(12,4),dpi=100)
+    #
+    if hasattr(model, 'coef_'):
+        importance_tmp = model.coef_[0].astype('float')
+    else:
+        importance_tmp = model.feature_importances_.astype('float')
+    # 
+    plt.subplot(1, 1, 1)
+    ppap_tab_utl.draw_importance(importance  = importance_tmp, 
+                                 column_name = column_name)
+
+    # plot
+    fig = plt.figure(figsize=(12,4),dpi=100)
+
+    ax = plt.subplot(1, 2, 1)
+    auc_test = draw_roc(y_hat      = y_test_hat, 
+                        y          = y_test, 
+                        model_name = 'lightGBM', 
+                        data_type  = 'test')
+    ax = plt.subplot(1, 2, 2)
+    draw_auc(auc        = auc_test, 
+             model_name = 'lightGBM', 
+             data_type  = 'test')
+
+    # plot
+    fig = plt.figure(figsize=(12,4),dpi=100)
+
+    ax = plt.subplot(1, 2, 1)
+    auc_test = draw_pr(y_hat      = y_test_hat, 
+                       y          = y_test, 
+                       model_name = 'lightGBM', 
+                       data_type  = 'test')
+    ax = plt.subplot(1, 2, 2)
+    draw_auc(auc        = auc_test, 
+             model_name = 'lightGBM', 
+             data_type  = 'test')
+    # 
+    plt.show()
+    ############################################################
+
+    return (y_test_hat)
 
 # 
 def cv_random(X, 

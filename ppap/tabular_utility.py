@@ -1230,6 +1230,7 @@ def kmeans_classification(X,
         plt.xlabel('column index')
         plt.rcParams["font.size"] = font_size
         plt.grid(True)
+        plt.show()
         ####################################################
 
     return (kmeans_result, X_, idx_k_sort)

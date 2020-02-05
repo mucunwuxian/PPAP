@@ -158,7 +158,8 @@ def impadding_mirror(img, padding_vert, padding_horz=None, decay=None):
 
 
 # 
-def imtrimming(img, threshold=150, img_size_min=5): # for gray
+def imtrimming(img, threshold=150, img_size_min=5, 
+               horz_trim=True, vert_trim=True): # for gray
     # 
     img_height   = np.shape(img)[0]
     img_width    = np.shape(img)[1]
@@ -169,29 +170,33 @@ def imtrimming(img, threshold=150, img_size_min=5): # for gray
         # 
         process_flg = False
         # 1st, top
-        if (np.min(img[0, :])  > threshold) & (np.shape(img)[0] > img_size_min):
-            # 
-            img              = img[1:, :]
-            adjust_ratio[0] += 1 / img_height
-            process_flg      = True
+        if (vert_trim == True):
+            if (np.min(img[0, :])  > threshold) & (np.shape(img)[0] > img_size_min):
+                # 
+                img              = img[1:, :]
+                adjust_ratio[0] += 1 / img_height
+                process_flg      = True
         # 2nd, left
-        if (np.min(img[:, 0])  > threshold) & (np.shape(img)[1] > img_size_min):
-            # 
-            img              = img[:, 1:]
-            adjust_ratio[1] += 1 / img_width
-            process_flg      = True
+        if (horz_trim == True):
+            if (np.min(img[:, 0])  > threshold) & (np.shape(img)[1] > img_size_min):
+                # 
+                img              = img[:, 1:]
+                adjust_ratio[1] += 1 / img_width
+                process_flg      = True
         # 3rd, bottom
-        if (np.min(img[-1, :]) > threshold) & (np.shape(img)[0] > img_size_min):
-            # 
-            img              = img[:-1, :]
-            adjust_ratio[2] += 1 / img_height
-            process_flg      = True
+        if (vert_trim == True):
+            if (np.min(img[-1, :]) > threshold) & (np.shape(img)[0] > img_size_min):
+                # 
+                img              = img[:-1, :]
+                adjust_ratio[2] += 1 / img_height
+                process_flg      = True
         # 4th, right
-        if (np.min(img[:, -1]) > threshold) & (np.shape(img)[1] > img_size_min):
-            # 
-            img              = img[:, :-1]
-            adjust_ratio[3] += 1 / img_width
-            process_flg      = True
+        if (horz_trim == True):
+            if (np.min(img[:, -1]) > threshold) & (np.shape(img)[1] > img_size_min):
+                # 
+                img              = img[:, :-1]
+                adjust_ratio[3] += 1 / img_width
+                process_flg      = True
         # 
         if (process_flg == False):
             break

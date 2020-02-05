@@ -92,6 +92,7 @@ def draw_prediction_scat(y_hat,
     plt.grid(True)
     ############################################################
 
+
 # 
 def draw_prediction_dist(y_hat, 
                          y, 
@@ -128,6 +129,7 @@ def draw_prediction_dist(y_hat,
     plt.rcParams["font.size"] = font_size
     plt.grid(True)
     ############################################################
+
 
 # y_hat 1 dim -> (data index)
 # y_hat 2 dim -> (data index, cross validation index)
@@ -274,6 +276,7 @@ def draw_pr(y_hat,
 
     return auc
 
+
 # auc 1 dim -> (cross validation index)
 # auc 2 dim -> (cross validation index, model index)
 def draw_auc(auc, 
@@ -366,6 +369,7 @@ def draw_auc(auc,
 
     return idx_sort_auc
 
+
 # 
 def train_and_predict(X_train, 
                       y_train, 
@@ -430,6 +434,8 @@ def train_and_predict(X_train,
             X_train_up, 
             y_train_up)
 
+
+# 
 def train_predict_and_measure(X_train, 
                               y_train, 
                               X_test, 

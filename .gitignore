@@ -1,0 +1,7 @@
+cache/*
+data/*
+query/*
+!data/titanic
+*.ipynb
+!demo*.ipynb
+.vscode/*

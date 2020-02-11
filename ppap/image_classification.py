@@ -30,7 +30,6 @@ from datetime              import datetime
 from datetime              import timedelta
 
 from sklearn.metrics       import accuracy_score, precision_score, recall_score, classification_report, confusion_matrix
-from sklearn.datasets      import fetch_mldata
 
 np.random.seed(0)
 
@@ -91,10 +90,15 @@ def _feed_forward(model, device, X_image, X_table, batch_size=128):
     
     # adjust when image is one-record or gray
     if (X_image is not None):
-        if (len(np.shape(X_image)) == 2):
+        if (len(np.shape(X_image)) == 2): # single gray scale image
             X_image = X_image[np.newaxis, :, :]
         if (len(np.shape(X_image)) == 3):
-            X_image = X_image[:, np.newaxis, :, :]
+            if ((np.shape(X_image)[2] == 1) | (np.shape(X_image)[2] == 3)): # multi gray scale image
+                X_image = X_image[np.newaxis, :, :, :]
+            else: # single RGB image
+                X_image = X_image[:, np.newaxis, :, :]
+        if (len(np.shape(X_image)) == 4): # multi RGB image
+            X_image = X_image.transpose(0, 3, 1, 2)
     # adjust when table is one-record
     if (X_table is not None):
         if (len(np.shape(X_table)) == 1):

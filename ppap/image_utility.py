@@ -637,9 +637,25 @@ def imcrop(img, crop_height, crop_width,
     crop_bottom = crop_top  + crop_height
     crop_right  = crop_left + crop_width
     # 
-    img_crop    = img[crop_top:crop_bottom, 
-                      crop_left:crop_right]
+    if (len(np.shape(img)) == 2):
+        img_crop = img[crop_top:crop_bottom, 
+                       crop_left:crop_right]
+    if (len(np.shape(img)) == 3):
+        img_crop = img[crop_top:crop_bottom, 
+                       crop_left:crop_right, :]
     # 
     return (img_crop, crop_top, crop_left)
 
-                
+# 
+def imrotate(img, angle):
+    # 
+    # refer from [https://www.oreilly.com/library/view/opencv-with-python/9781785283932/ch01s05.html]
+    # refer from [https://note.nkmk.me/python-opencv-warp-affine-perspective/]
+    # 
+    img_height = np.shape(img)[0]
+    img_width  = np.shape(img)[1]
+    # 
+    rotation_matrix = cv2.getRotationMatrix2D((img_width/2, img_height/2), angle, 1)
+    img_rotation    = cv2.warpAffine(img, rotation_matrix, (img_width, img_height), borderMode=cv2.BORDER_REFLECT)
+    # 
+    return img_rotation    

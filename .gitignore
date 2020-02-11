@@ -1,7 +1,8 @@
 cache/*
 data/*
 query/*
-!data/titanic
+*/__pycache__/*
 *.ipynb
-!demo*.ipynb
 .vscode/*
+.ipynb_checkpoints/*
+!data/titanic
